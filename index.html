@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#176b4d">
+<title>Milk Record Book</title>
+<style>
+:root{--g:#0866d9;--p:#eaf3ff;--ink:#111b36;--muted:#63718a;--line:#dbe5f2;--red:#c62828}
+*{box-sizing:border-box}body{margin:0;background:#f4f8fd;color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}header{background:var(--g);color:white;padding:22px 16px}header h1{margin:0;font-size:1.55rem}header p{margin:5px 0 0;color:#d9f1e2}nav{display:flex;gap:8px;overflow:auto;padding:12px max(12px,calc((100% - 1100px)/2));background:white;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:3}nav button{white-space:nowrap;background:var(--p);color:var(--g)}nav button.active{background:var(--g);color:white}main{max-width:1100px;margin:auto;padding:14px}.panel{background:white;border:1px solid var(--line);border-radius:15px;padding:15px;margin-bottom:14px;box-shadow:0 3px 12px #143b2508}h2{font-size:1.1rem;margin:0 0 13px}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}.field{display:flex;flex-direction:column;gap:5px}.full{grid-column:1/-1}label{font-size:.86rem;font-weight:650;color:#35463b}input,select,textarea{width:100%;min-width:0;padding:10px;border:1px solid #cbd8ce;border-radius:9px;background:white;color:var(--ink);font:inherit}input:focus,select:focus{outline:2px solid #9bd6b4}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}button{border:0;border-radius:9px;padding:10px 13px;font:inherit;font-weight:700;cursor:pointer}.primary{background:var(--g);color:white}.secondary{background:var(--p);color:var(--g)}.danger{background:#fff0ef;color:var(--red)}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}.stat{background:white;border:1px solid var(--line);border-radius:12px;padding:12px}.stat span{display:block;color:var(--muted);font-size:.8rem}.stat strong{font-size:1.15rem;overflow-wrap:anywhere}.muted,.small{color:var(--muted);font-size:.84rem}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;font-size:.88rem;white-space:nowrap}th,td{text-align:left;padding:9px;border-bottom:1px solid var(--line)}th{background:#edf4ff;color:#183b71}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.toolbar>*{flex:1;min-width:135px}.hide{display:none!important}.notice{background:#fff8e6;border:1px solid #f1dfaa;border-radius:10px;padding:10px;font-size:.85rem;margin-top:12px}.customer-hero{display:flex;align-items:center;gap:12px;background:linear-gradient(120deg,#eaf3ff,#f8fbff);border:1px solid #d7e7ff;border-radius:14px;padding:14px;margin:12px 0}.avatar{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:#cfe3ff;color:#0755b8;font-size:1.25rem;font-weight:800;flex-shrink:0}.lookup-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:12px 0}.lookup-stats .stat:nth-child(1){background:#edf6ff}.lookup-stats .stat:nth-child(2){background:#e9fbf0}.lookup-stats .stat:nth-child(3){background:#fff3e6}.lookup-stats .stat:nth-child(4){background:#f1edff}.pill{display:inline-block;border-radius:20px;background:var(--p);color:var(--g);padding:3px 8px;font-size:.8rem}
+@media(max-width:700px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.stats{grid-template-columns:repeat(2,1fr)}.lookup-stats{grid-template-columns:repeat(2,minmax(0,1fr))}main{padding:10px}.panel{padding:12px}}
+@media(max-width:420px){.grid{grid-template-columns:1fr}.full{grid-column:auto}header{padding:18px 13px}}
+</style>
+</head>
+<body>
+<header><h1>🥛 Milk Record Book</h1><p>Customer accounts · Morning & evening · Monthly bills</p></header>
+<nav>
+<button class="active" data-tab="entry">Milk entry</button><button data-tab="customers">Customers</button><button data-tab="daily">Daily totals</button><button data-tab="monthly">Monthly account</button><button data-tab="lookup">Customer search</button><button data-tab="settings">Fat rate & backup</button>
+</nav>
+<main>
+<div class="stats">
+<div class="stat"><span>Total records</span><strong id="sRecords">0</strong></div><div class="stat"><span>Total milk</span><strong id="sLiters">0 L</strong></div><div class="stat"><span>Milk value</span><strong id="sValue">₹0.00</strong></div><div class="stat"><span>Balance due</span><strong id="sDue">₹0.00</strong></div>
+</div>
+<section id="tab-entry" class="panel tab">
+<h2 id="entryTitle">Add milk entry</h2><form id="entryForm"><input type="hidden" id="entryId">
+<div class="grid">
+<div class="field"><label>Customer *</label><select id="customerId" required></select></div>
+<div class="field"><label>Date *</label><input id="date" type="date" required></div>
+<div class="field"><label>Session *</label><select id="session"><option>Morning</option><option>Evening</option></select></div>
+<div class="field"><label>Milk liters *</label><input id="liters" type="number" min="0" step=".01" required placeholder="1.50"></div>
+<div class="field"><label>Fat %</label><input id="fat" type="number" min="0" max="100" step=".1" placeholder="4.0"></div>
+<div class="field"><label>Rate per liter (₹)</label><input id="rate" type="number" min="0" step=".01" placeholder="Auto from fat rule"></div>
+<div class="field"><label>Calculated rate</label><input id="autoRate" readonly placeholder="Set fat rate rule"></div>
+<div class="field"><label>Entry amount (₹)</label><input id="amount" readonly value="₹0.00"></div>
+<div class="field"><label>Notes</label><input id="notes" placeholder="Optional"></div>
+</div>
+<p class="small">Rate can be entered manually. If left blank, the app calculates it from the fat-rate rule on the Settings tab. Amount = liters × selected rate.</p>
+<div class="actions"><button class="primary" type="submit" id="saveEntry">Save entry</button><button class="secondary" type="button" id="cancelEdit">Clear form</button><button class="secondary" type="button" id="sendLastSms" disabled>Send SMS summary</button></div></form>
+<div class="notice">Customer details are saved separately under Customers. Records stay in this browser on this device unless you export a backup.</div>
+</section>
+
+<section id="tab-customers" class="panel tab hide">
+<h2>Customer directory</h2><form id="customerForm"><input type="hidden" id="custEditId"><div class="grid">
+<div class="field"><label>Customer name *</label><input id="custName" required placeholder="Full name"></div><div class="field"><label>Card number</label><input id="custCard" placeholder="e.g. 1024"></div><div class="field"><label>Contact number</label><input id="custPhone" type="tel" inputmode="numeric" maxlength="10" pattern="[0-9]{10}" required placeholder="10-digit mobile number"><span class="small">Enter exactly 10 digits (India).</span></div><div class="field full"><label>Address / notes</label><input id="custAddress" placeholder="Optional"></div>
+<div class="field full"><label><input id="smsOptIn" type="checkbox" style="width:auto;margin-right:7px">Customer has agreed to receive milk record SMS messages</label></div></div>
+<div class="actions"><button class="primary" id="saveCustomer" type="submit">Save customer</button><button class="secondary" id="cancelCustomer" type="button">Clear</button></div></form>
+<div class="toolbar" style="margin-top:14px"><input id="customerSearch" placeholder="Search name, card or phone"></div><div class="tablewrap"><table><thead><tr><th>Name</th><th>Card no.</th><th>Contact</th><th>All-time liters</th><th>Milk value</th><th>Actions</th></tr></thead><tbody id="customerRows"></tbody></table></div><p id="customerEmpty" class="muted">No customers added yet.</p>
+</section>
+
+<section id="tab-daily" class="panel tab hide"><h2>Daily morning & evening totals</h2><div class="toolbar"><input id="dailyDate" type="date"></div><div class="stats"><div class="stat"><span>Morning liters</span><strong id="morningL">0 L</strong></div><div class="stat"><span>Morning amount</span><strong id="morningA">₹0.00</strong></div><div class="stat"><span>Evening liters</span><strong id="eveningL">0 L</strong></div><div class="stat"><span>Evening amount</span><strong id="eveningA">₹0.00</strong></div></div><h2>Entries for selected day</h2><div class="tablewrap"><table><thead><tr><th>Session</th><th>Customer</th><th>Liters</th><th>Fat %</th><th>Rate/L</th><th>Amount</th></tr></thead><tbody id="dailyRows"></tbody></table></div></section>
+
+<section id="tab-monthly" class="panel tab hide"><h2>Customer-wise monthly account</h2><div class="toolbar"><input id="month" type="month"><select id="monthCustomer"><option value="">All customers</option></select></div><div class="stats"><div class="stat"><span>Milk liters</span><strong id="monthL">0 L</strong></div><div class="stat"><span>Milk bill</span><strong id="monthBill">₹0.00</strong></div><div class="stat"><span>Payments received</span><strong id="monthPaid">₹0.00</strong></div><div class="stat"><span>Balance due</span><strong id="monthDue">₹0.00</strong></div></div><div class="tablewrap"><table><thead><tr><th>Customer</th><th>Morning L</th><th>Evening L</th><th>Total L</th><th>Milk bill</th><th>Payments</th><th>Balance</th></tr></thead><tbody id="monthlyRows"></tbody></table></div>
+<div class="panel" style="margin-top:15px;margin-bottom:0"><h2>Record a customer payment</h2><form id="paymentForm"><div class="grid"><div class="field"><label>Customer *</label><select id="paymentCustomer" required></select></div><div class="field"><label>Payment date *</label><input id="paymentDate" type="date" required></div><div class="field"><label>Amount received (₹) *</label><input id="paymentAmount" type="number" min=".01" step=".01" required></div><div class="field"><label>Payment method</label><select id="paymentMethod"><option>Cash</option><option>UPI</option><option>Bank transfer</option><option>Other</option></select></div><div class="field full"><label>Notes / reference</label><input id="paymentNotes" placeholder="Optional"></div></div><div class="actions"><button class="primary" type="submit">Save payment</button></div></form><h2 style="margin-top:18px">Payments in selected month</h2><div class="tablewrap"><table><thead><tr><th>Date</th><th>Customer</th><th>Amount</th><th>Method</th><th>Notes</th><th>Action</th></tr></thead><tbody id="paymentRows"></tbody></table></div></div>
+<p class="small">Monthly balance = milk value for the selected month − payments recorded in that same month. This simple version does not carry old balances forward automatically.</p></section>
+
+
+<section id="tab-lookup" class="panel tab hide">
+<h2>Customer account lookup</h2>
+<p class="muted">Search by customer name, card number, or mobile number to see the customer's milk history, total liters, total bill, payments and outstanding balance.</p>
+<div class="toolbar"><input id="lookupQuery" type="search" placeholder="Search name, card number or mobile number"><select id="lookupCustomer"><option value="">Choose customer</option></select><input id="lookupMonth" type="month" aria-label="Month filter"></div>
+<div id="lookupDetail"><p class="muted">Enter a name, card number or mobile number to find a customer.</p></div>
+</section>
+
+<section id="tab-settings" class="panel tab hide"><h2>Automatic fat-rate rule</h2><p class="muted">Set a simple rate rule: base rate at a reference fat %, plus/minus an amount per 1% fat difference. Confirm these values with your dairy's actual pricing policy.</p><form id="rateForm"><div class="grid"><div class="field"><label>Base rate (₹/L)</label><input id="baseRate" type="number" min="0" step=".01" required></div><div class="field"><label>Reference fat %</label><input id="baseFat" type="number" min="0" max="100" step=".1" required></div><div class="field"><label>₹ change per 1% fat</label><input id="fatStep" type="number" step=".01" required></div></div><div class="actions"><button class="primary" type="submit">Save rate rule</button></div></form><p id="ratePreview" class="small"></p>
+<h2 style="margin-top:24px">SMS reminders</h2>
+<p class="muted">This free version prepares a text message and opens your phone's messaging app. You review and tap Send. Fully automatic background SMS is not supported by this browser app.</p>
+<div class="grid"><div class="field"><label>Sender / dairy name</label><input id="dairyName" placeholder="Your dairy name"></div><div class="field"><label>SMS timing</label><select id="smsTiming"><option value="after">After each saved entry</option><option value="manual">Only when I tap Send SMS</option></select></div></div>
+<div class="actions"><button class="secondary" id="saveSmsSettings" type="button">Save SMS settings</button></div>
+<h2 style="margin-top:24px">Backup and restore</h2><p class="muted">Backup contains customer names, contact details, milk entries, payments and rate settings. Keep it somewhere private.</p><div class="actions"><button class="primary" id="backupBtn" type="button">Download JSON backup</button><button class="secondary" id="csvBtn" type="button">Export milk entries CSV</button><button class="secondary" id="paymentCsvBtn" type="button">Export payments CSV</button><label class="secondary" style="display:inline-flex;align-items:center;cursor:pointer">Restore JSON backup<input id="restoreFile" type="file" accept=".json,application/json" style="display:none"></label></div><div class="notice">Restoring a backup replaces the data currently in this browser. Export your current data first if you need to keep it.</div>
+<h2 style="margin-top:24px">All milk entries</h2><div class="toolbar"><input id="entrySearch" placeholder="Search customer, card, phone"><input id="entryDateFilter" type="date"><select id="entrySessionFilter"><option value="">All sessions</option><option>Morning</option><option>Evening</option></select></div><div class="tablewrap"><table><thead><tr><th>Date</th><th>Session</th><th>Customer</th><th>Liters</th><th>Fat</th><th>Rate/L</th><th>Amount</th><th>Actions</th></tr></thead><tbody id="entryRows"></tbody></table></div></section>
+<p class="small">Milk Record Book v3 · Blue mobile design · Offline-first, single-device storage</p>
+</main>
+<script>
+const $=id=>document.getElementById(id), KEY="milkRecordBook.v2";
+const todayISO=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`};
+const monthISO=()=>todayISO().slice(0,7), money=n=>"₹"+Number(n||0).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2}), num=n=>Number(n||0);
+let db={customers:[],entries:[],payments:[],rateRule:{baseRate:40,baseFat:4,fatStep:2},smsSettings:{dairyName:"",timing:"manual"}};
+try{const old=JSON.parse(localStorage.getItem(KEY)||"null");if(old&&typeof old==="object")db={...db,...old};}catch{} if(!db.smsSettings)db.smsSettings={dairyName:"",timing:"manual"};
+function save(){localStorage.setItem(KEY,JSON.stringify(db));renderAll();}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function customer(id){return db.customers.find(c=>c.id===id)||{}}
+function autoRate(fat){let r=db.rateRule;return Math.max(0,num(r.baseRate)+(num(fat)-num(r.baseFat))*num(r.fatStep))}
+function effectiveRate(x){return x.rateManual!==""&&x.rateManual!=null?num(x.rateManual):autoRate(x.fat)}
+function amount(x){return num(x.liters)*effectiveRate(x)}
+function sums(list){return {liters:list.reduce((s,x)=>s+num(x.liters),0),amount:list.reduce((s,x)=>s+amount(x),0)}}
+function customerOptions(selectId,all=false,selected=""){const el=$(selectId),old=selected||el.value;el.innerHTML=(all?'<option value="">All customers</option>':'<option value="">Select customer</option>')+db.customers.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`<option value="${esc(c.id)}">${esc(c.name)}${c.card?' · Card '+esc(c.card):''}</option>`).join("");if([...el.options].some(o=>o.value===old))el.value=old;}
+function setupDates(){for(const id of ["date","dailyDate","paymentDate"])if(!$(id).value)$(id).value=todayISO();if(! $("month").value)$("month").value=monthISO();if(!$("lookupMonth").value)$("lookupMonth").value=monthISO();}
+function setTab(name){document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("hide",x.id!=="tab-"+name));document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("active",x.dataset.tab===name));}
+document.querySelector("nav").addEventListener("click",e=>{let b=e.target.closest("button[data-tab]");if(b)setTab(b.dataset.tab)});
+function clearEntry(){ $("entryForm").reset();$("entryId").value="";$("date").value=todayISO();$("entryTitle").textContent="Add milk entry";$("saveEntry").textContent="Save entry";updateCalc();}
+$("entryForm").addEventListener("submit",e=>{e.preventDefault();if(!db.customers.length){alert("Please add a customer in the Customers tab first.");setTab("customers");return;}
+const id=$("entryId").value, liters=num($("liters").value),fat=num($("fat").value),manual=$("rate").value.trim();
+const x={id:id||crypto.randomUUID?.()||String(Date.now()),customerId:$("customerId").value,date:$("date").value,session:$("session").value,liters,fat,rateManual:manual===""?"":num(manual),notes:$("notes").value.trim()};
+if(!x.customerId||!x.date||liters<0){alert("Check customer, date and liters.");return;}
+if(id)db.entries=db.entries.map(y=>y.id===id?x:y);else db.entries.push(x);save();window.__lastSavedEntry=x; $("sendLastSms").disabled=false;clearEntry();const c=customer(x.customerId);if(c.phone && /^\\d{10}$/.test(c.phone)){if(c.smsOptIn){sendEntrySms(x);}else if(confirm("Milk entry saved. Open a prepared SMS to this customer now? The customer has not been marked as opted in for SMS.")){sendEntrySms(x);}}else{alert("Milk entry saved. Add a valid 10-digit customer mobile number to prepare SMS.");}});
+$("cancelEdit").onclick=clearEntry;
+["liters","fat","rate"].forEach(id=>$(id).addEventListener("input",updateCalc));
+function updateCalc(){const f=$("fat").value;const ar=autoRate(f);const chosen=$("rate").value.trim()===""?ar:num($("rate").value);$("autoRate").value=money(ar);$("amount").value=money(num($("liters").value)*chosen);}
+$("customerForm").addEventListener("submit",e=>{e.preventDefault();let id=$("custEditId").value;let name=$("custName").value.trim(), card=$("custCard").value.trim(), phone=$("custPhone").value.trim();
+if(!name){alert("Enter customer name.");return;}
+if(phone && !/^\\d{10}$/.test(phone)){alert("Mobile number must be exactly 10 digits.");$("custPhone").focus();return;}
+if(card && db.customers.some(c=>c.card.trim().toLowerCase()===card.toLowerCase()&&c.id!==id)){alert("Warning: this card number is already assigned to another customer. Please check the card number.");$("custCard").focus();return;}
+let x={id:id||crypto.randomUUID?.()||String(Date.now()),name,card,phone,address:$("custAddress").value.trim(),smsOptIn:$("smsOptIn").checked};if(id)db.customers=db.customers.map(c=>c.id===id?x:c);else db.customers.push(x);save();clearCustomer();});
+function clearCustomer(){$("customerForm").reset();$("custEditId").value="";$("saveCustomer").textContent="Save customer";}
+$("cancelCustomer").onclick=clearCustomer;
+$("customerRows").addEventListener("click",e=>{let edit=e.target.dataset.editcust,del=e.target.dataset.delcust;if(edit){let c=customer(edit);$("custEditId").value=c.id;$("custName").value=c.name;$("custCard").value=c.card;$("custPhone").value=c.phone;$("custAddress").value=c.address;$("smsOptIn").checked=!!c.smsOptIn;$("saveCustomer").textContent="Update customer";window.scrollTo({top:0,behavior:"smooth"});}if(del){if(db.entries.some(x=>x.customerId===del)||db.payments.some(x=>x.customerId===del)){alert("This customer has milk entries or payments. Keep the customer to preserve account history.");return;}if(confirm("Delete this customer?")){db.customers=db.customers.filter(c=>c.id!==del);save();}}});
+$("rateForm").addEventListener("submit",e=>{e.preventDefault();db.rateRule={baseRate:num($("baseRate").value),baseFat:num($("baseFat").value),fatStep:num($("fatStep").value)};save();});
+function renderCustomers(){let q=$("customerSearch").value.toLowerCase();let list=db.customers.filter(c=>[c.name,c.card,c.phone].some(v=>String(v||"").toLowerCase().includes(q)));$("customerRows").innerHTML=list.map(c=>{let es=db.entries.filter(x=>x.customerId===c.id),s=sums(es);return `<tr><td>${esc(c.name)}</td><td>${esc(c.card||"—")}</td><td>${esc(c.phone||"—")}</td><td>${s.liters.toFixed(2)}</td><td>${money(s.amount)}</td><td><button class="secondary" data-editcust="${esc(c.id)}">Edit</button> <button class="danger" data-delcust="${esc(c.id)}">Delete</button></td></tr>`}).join("");$("customerEmpty").style.display=list.length?"none":"block";}
+$("customerSearch").oninput=renderCustomers;
+function renderDaily(){let d=$("dailyDate").value||todayISO(),list=db.entries.filter(x=>x.date===d);for(let sess of ["Morning","Evening"]){let s=sums(list.filter(x=>x.session===sess));$(sess==="Morning"?"morningL":"eveningL").textContent=s.liters.toFixed(2)+" L";$(sess==="Morning"?"morningA":"eveningA").textContent=money(s.amount);}
+$("dailyRows").innerHTML=list.sort((a,b)=>a.session.localeCompare(b.session)).map(x=>`<tr><td>${esc(x.session)}</td><td>${esc(customer(x.customerId).name||"Unknown")}</td><td>${num(x.liters).toFixed(2)}</td><td>${num(x.fat).toFixed(1)}%</td><td>${money(effectiveRate(x))}</td><td>${money(amount(x))}</td></tr>`).join("");}
+$("dailyDate").onchange=renderDaily;
+function renderMonthly(){let m=$("month").value||monthISO(),cid=$("monthCustomer").value;let es=db.entries.filter(x=>x.date.startsWith(m)&&(!cid||x.customerId===cid)),ps=db.payments.filter(x=>x.date.startsWith(m)&&(!cid||x.customerId===cid));let total=sums(es),paid=ps.reduce((s,p)=>s+num(p.amount),0);$("monthL").textContent=total.liters.toFixed(2)+" L";$("monthBill").textContent=money(total.amount);$("monthPaid").textContent=money(paid);$("monthDue").textContent=money(total.amount-paid);
+let customers=cid?db.customers.filter(c=>c.id===cid):db.customers;
+$("monthlyRows").innerHTML=customers.map(c=>{let ce=es.filter(x=>x.customerId===c.id),cp=ps.filter(p=>p.customerId===c.id),mor=sums(ce.filter(x=>x.session==="Morning")).liters,eve=sums(ce.filter(x=>x.session==="Evening")).liters,s=sums(ce),p=cp.reduce((t,x)=>t+num(x.amount),0);return `<tr><td>${esc(c.name)}</td><td>${mor.toFixed(2)}</td><td>${eve.toFixed(2)}</td><td>${s.liters.toFixed(2)}</td><td>${money(s.amount)}</td><td>${money(p)}</td><td>${money(s.amount-p)}</td></tr>`}).join("");
+$("paymentRows").innerHTML=ps.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(p=>`<tr><td>${esc(p.date)}</td><td>${esc(customer(p.customerId).name||"Unknown")}</td><td>${money(p.amount)}</td><td>${esc(p.method)}</td><td>${esc(p.notes||"—")}</td><td><button class="danger" data-delpay="${esc(p.id)}">Delete</button></td></tr>`).join("");}
+$("month").onchange=renderMonthly;$("monthCustomer").onchange=renderMonthly;
+$("paymentForm").addEventListener("submit",e=>{e.preventDefault();let p={id:crypto.randomUUID?.()||String(Date.now()),customerId:$("paymentCustomer").value,date:$("paymentDate").value,amount:num($("paymentAmount").value),method:$("paymentMethod").value,notes:$("paymentNotes").value.trim()};if(!p.customerId||!p.date||p.amount<=0){alert("Enter customer, date and a positive payment.");return;}db.payments.push(p);save();$("paymentForm").reset();$("paymentDate").value=todayISO();});
+$("paymentRows").addEventListener("click",e=>{let id=e.target.dataset.delpay;if(id&&confirm("Delete this payment record?")){db.payments=db.payments.filter(p=>p.id!==id);save();}});
+function renderEntries(){let q=$("entrySearch").value.toLowerCase(),d=$("entryDateFilter").value,s=$("entrySessionFilter").value;let list=db.entries.filter(x=>{let c=customer(x.customerId);return(!q||[c.name,c.card,c.phone].some(v=>String(v||"").toLowerCase().includes(q)))&&(!d||x.date===d)&&(!s||x.session===s)}).sort((a,b)=>b.date.localeCompare(a.date));$("entryRows").innerHTML=list.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.session)}</td><td>${esc(customer(x.customerId).name||"Unknown")}</td><td>${num(x.liters).toFixed(2)}</td><td>${num(x.fat).toFixed(1)}%</td><td>${money(effectiveRate(x))}</td><td>${money(amount(x))}</td><td><button class="secondary" data-editentry="${esc(x.id)}">Edit</button> <button class="danger" data-delentry="${esc(x.id)}">Delete</button></td></tr>`).join("");}
+["entrySearch","entryDateFilter","entrySessionFilter"].forEach(id=>$(id).addEventListener(id==="entrySearch"?"input":"change",renderEntries));
+$("entryRows").addEventListener("click",e=>{let edit=e.target.dataset.editentry,del=e.target.dataset.delentry;if(edit){let x=db.entries.find(y=>y.id===edit);if(!x)return;setTab("entry");$("entryId").value=x.id;customerOptions("customerId",false,x.customerId);$("date").value=x.date;$("session").value=x.session;$("liters").value=x.liters;$("fat").value=x.fat;$("rate").value=x.rateManual===""?"":x.rateManual;$("notes").value=x.notes||"";$("entryTitle").textContent="Edit milk entry";$("saveEntry").textContent="Update entry";updateCalc();window.scrollTo({top:0,behavior:"smooth"});}if(del&&confirm("Delete this milk entry?")){db.entries=db.entries.filter(x=>x.id!==del);save();}});
+function csvDownload(filename,rows){if(!rows.length){alert("No records to export.");return;}const csv=rows.map(row=>row.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(",")).join("\r\n");let blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=filename;a.click();URL.revokeObjectURL(url);}
+$("csvBtn").onclick=()=>csvDownload("milk-entries.csv",[["Date","Session","Customer","Card number","Contact","Liters","Fat %","Rate/L","Amount","Notes"],...db.entries.map(x=>{let c=customer(x.customerId);return[x.date,x.session,c.name,c.card,c.phone,x.liters,x.fat,effectiveRate(x),amount(x),x.notes]})]);
+$("paymentCsvBtn").onclick=()=>csvDownload("milk-payments.csv",[["Date","Customer","Amount","Method","Notes"],...db.payments.map(p=>[p.date,customer(p.customerId).name,p.amount,p.method,p.notes])]);
+$("backupBtn").onclick=()=>{let blob=new Blob([JSON.stringify(db,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="milk-record-backup-"+todayISO()+".json";a.click();URL.revokeObjectURL(url);};
+$("restoreFile").onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let d=JSON.parse(await f.text());if(!d||!Array.isArray(d.customers)||!Array.isArray(d.entries)||!Array.isArray(d.payments)||!d.rateRule)throw Error("Backup format not recognized");if(confirm("Replace all current app data with this backup? Export a backup of current data first if needed.")){db=d;save();}}catch(err){alert("Could not restore this file. Choose a valid Milk Record Book JSON backup.");}e.target.value="";};
+
+
+function buildEntrySms(x){
+ const c=customer(x.customerId), dairy=db.smsSettings?.dairyName||"Milk Record Book";
+ const allE=db.entries.filter(e=>e.customerId===x.customerId),allP=db.payments.filter(p=>p.customerId===x.customerId);
+ const s=sums(allE),paid=allP.reduce((t,p)=>t+num(p.amount),0),due=s.amount-paid;
+ return `${dairy}: ${x.session} milk record for ${x.date}. Milk: ${num(x.liters).toFixed(2)} L; Fat: ${num(x.fat).toFixed(1)}%; Rate: ${money(effectiveRate(x))}/L; Amount: ${money(amount(x))}. Total milk to date: ${s.liters.toFixed(2)} L; total milk value: ${money(s.amount)}; payments: ${money(paid)}; balance due: ${money(due)}.`;
+}
+function openSms(phone,message){
+ if(!phone||!/^\\d{10}$/.test(phone)){alert("This customer needs a valid 10-digit mobile number first.");return;}
+ // Use SMS URI so the user can review and send from their messaging app.
+ const url="sms:+91"+phone+"?body="+encodeURIComponent(message);
+ window.location.href=url;
+}
+function sendEntrySms(x){
+ const c=customer(x.customerId);
+ if(!c.phone){alert("Add the customer's 10-digit mobile number before sending SMS.");return;}
+ if(!c.smsOptIn&&!confirm("No SMS consent is recorded for this customer. Send this message anyway?"))return;
+ openSms(c.phone,buildEntrySms(x));
+}
+$("sendLastSms").addEventListener("click",()=>{if(window.__lastSavedEntry)sendEntrySms(window.__lastSavedEntry);else alert("Save a milk entry first.");});
+$("saveSmsSettings").addEventListener("click",()=>{db.smsSettings={dairyName:$("dairyName").value.trim(),timing:$("smsTiming").value};save();alert("SMS settings saved.");});
+
+function renderLookup(){
+ const query=($("lookupQuery").value||"").trim().toLowerCase();
+ const month=$("lookupMonth").value||monthISO();
+ customerOptions("lookupCustomer",true,$("lookupCustomer").value);
+ const match=db.customers.filter(c=>query && [c.name,c.card,c.phone].some(v=>String(v||"").toLowerCase().includes(query)));
+ let selected=$("lookupCustomer").value;
+ if(query && match.length===1){selected=match[0].id;$("lookupCustomer").value=selected;}
+ if(!selected && match.length>1){
+   $("lookupDetail").innerHTML='<p class="muted">More than one customer matches. Choose the correct customer below.</p>'+match.map(c=>`<button class="secondary" data-picklookup="${esc(c.id)}">${esc(c.name)} · Card ${esc(c.card||"—")} · ${esc(c.phone||"—")}</button>`).join(" ");
+   return;
+ }
+ if(!selected && match.length===0){
+   $("lookupDetail").innerHTML=query?'<p class="muted">No customer found. Try a name, card number, or full/partial mobile number.</p>':'<p class="muted">Enter a name, card number or mobile number to find a customer.</p>';
+   return;
+ }
+ const c=customer(selected); if(!c.id){$("lookupDetail").innerHTML='<p class="muted">Choose a customer or search by name, card number or mobile number.</p>';return;}
+ const allE=db.entries.filter(x=>x.customerId===c.id).sort((a,b)=>b.date.localeCompare(a.date));
+ const allP=db.payments.filter(x=>x.customerId===c.id);
+ const monthE=allE.filter(x=>x.date.startsWith(month)),monthP=allP.filter(x=>x.date.startsWith(month));
+ const allS=sums(allE), monthS=sums(monthE);
+ const paidAll=allP.reduce((s,p)=>s+num(p.amount),0),paidMonth=monthP.reduce((s,p)=>s+num(p.amount),0);
+ const dueAll=allS.amount-paidAll, dueMonth=monthS.amount-paidMonth;
+ const monLabel=month;
+ $("lookupDetail").innerHTML=`
+ <div class="customer-hero"><div class="avatar">${esc((c.name||"?").trim().charAt(0).toUpperCase())}</div><div><strong style="font-size:1.1rem">${esc(c.name)}</strong><div class="muted">Card: ${esc(c.card||"—")} · Mobile: ${esc(c.phone||"—")}</div><div class="muted">${esc(c.address||"")}</div></div></div>
+ <h2>All-time account</h2>
+ <div class="lookup-stats"><div class="stat"><span>Total milk</span><strong>${allS.liters.toFixed(2)} L</strong></div><div class="stat"><span>Total milk amount</span><strong>${money(allS.amount)}</strong></div><div class="stat"><span>Total payments</span><strong>${money(paidAll)}</strong></div><div class="stat"><span>Balance due</span><strong style="color:${dueAll>0?'#c62828':'#087443'}">${money(dueAll)}</strong></div></div>
+ <h2>${esc(monLabel)} account</h2>
+ <div class="lookup-stats"><div class="stat"><span>Monthly milk</span><strong>${monthS.liters.toFixed(2)} L</strong></div><div class="stat"><span>Monthly bill</span><strong>${money(monthS.amount)}</strong></div><div class="stat"><span>Monthly payments</span><strong>${money(paidMonth)}</strong></div><div class="stat"><span>Monthly balance</span><strong style="color:${dueMonth>0?'#c62828':'#087443'}">${money(dueMonth)}</strong></div></div>
+ <div class="actions"><button class="primary" data-addpayment="${esc(c.id)}">Record payment</button><button class="secondary" data-addmilk="${esc(c.id)}">Add milk entry</button><button class="secondary" data-customersms="${esc(c.id)}">Send account SMS</button></div>
+ <h2 style="margin-top:18px">Milk history</h2><div class="tablewrap"><table><thead><tr><th>Date</th><th>Session</th><th>Liters</th><th>Fat %</th><th>Rate/L</th><th>Amount</th></tr></thead><tbody>${allE.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.session)}</td><td>${num(x.liters).toFixed(2)}</td><td>${num(x.fat).toFixed(1)}%</td><td>${money(effectiveRate(x))}</td><td>${money(amount(x))}</td></tr>`).join("")||'<tr><td colspan="6">No milk entries yet.</td></tr>'}</tbody></table></div>
+ <h2 style="margin-top:18px">Payment history</h2><div class="tablewrap"><table><thead><tr><th>Date</th><th>Amount</th><th>Method</th><th>Notes</th></tr></thead><tbody>${allP.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(p=>`<tr><td>${esc(p.date)}</td><td>${money(p.amount)}</td><td>${esc(p.method)}</td><td>${esc(p.notes||"—")}</td></tr>`).join("")||'<tr><td colspan="4">No payments recorded yet.</td></tr>'}</tbody></table></div>
+ <p class="small">Balance shown is based on all recorded milk value minus all recorded payments. The month balance uses entries and payments dated in ${esc(monLabel)} only; earlier debt is not automatically carried into a monthly bill.</p>`;
+}
+$("lookupQuery").addEventListener("input",()=>{ $("lookupCustomer").value="";renderLookup();});
+$("lookupCustomer").addEventListener("change",renderLookup);
+$("lookupMonth").addEventListener("change",renderLookup);
+$("lookupDetail").addEventListener("click",e=>{
+ const pick=e.target.dataset.picklookup, pay=e.target.dataset.addpayment, milk=e.target.dataset.addmilk, csms=e.target.dataset.customersms;
+ if(pick){$("lookupCustomer").value=pick;renderLookup();}
+ if(pay){customerOptions("paymentCustomer",false,pay);setTab("monthly");$("paymentAmount").focus();}
+ if(milk){customerOptions("customerId",false,milk);setTab("entry");$("liters").focus();} if(csms){const c=customer(csms);const allE=db.entries.filter(x=>x.customerId===csms),allP=db.payments.filter(x=>x.customerId===csms),s=sums(allE),paid=allP.reduce((t,p)=>t+num(p.amount),0);openSms(c.phone,`${db.smsSettings?.dairyName||"Milk Record Book"} account summary: Total milk ${s.liters.toFixed(2)} L; total milk value ${money(s.amount)}; payments ${money(paid)}; balance due ${money(s.amount-paid)}.`);}
+});
+
+function renderAll(){customerOptions("customerId");customerOptions("monthCustomer",true);customerOptions("paymentCustomer");$("dairyName").value=db.smsSettings?.dairyName||"";$("smsTiming").value=db.smsSettings?.timing||"manual";$("baseRate").value=db.rateRule.baseRate;$("baseFat").value=db.rateRule.baseFat;$("fatStep").value=db.rateRule.fatStep;$("ratePreview").textContent=`Example: at ${db.rateRule.baseFat}% fat, rate is ${money(db.rateRule.baseRate)}/L. At ${num(db.rateRule.baseFat)+1}% fat, rate is ${money(autoRate(num(db.rateRule.baseFat)+1))}/L.`;let all=sums(db.entries);$("sRecords").textContent=db.entries.length;$("sLiters").textContent=all.liters.toFixed(2)+" L";$("sValue").textContent=money(all.amount);let paid=db.payments.reduce((s,p)=>s+num(p.amount),0);$("sDue").textContent=money(all.amount-paid);renderCustomers();renderDaily();renderMonthly();renderEntries();renderLookup();updateCalc();}
+setupDates();renderAll();
+</script>
+</body></html>

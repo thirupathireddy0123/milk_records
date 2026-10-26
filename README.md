@@ -1,0 +1,1 @@
+Milk Record Book v5: SMS composer opens immediately after Save when customer has a valid phone and consent is checked; otherwise asks permission. User must tap Send. Upload index.html, sw.js, manifest.webmanifest and icons to GitHub Pages. PWA cannot silently send SMS in background.
